@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calcolo Dose Presse</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; padding: 20px; }
+    .card { background-color: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 20px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    h2 { margin-top: 0; color: #38bdf8; font-size: 1.4em; }
+    label { font-weight: bold; font-size: 0.9em; display: block; margin-top: 15px; margin-bottom: 5px; color: #ccc; }
+    select, input { width: 100%; padding: 10px; background-color: #2c2c2c; border: 1px solid #555; border-radius: 5px; color: #fff; font-size: 16px; box-sizing: border-box; }
+    select:focus, input:focus { border-color: #38bdf8; outline: none; }
+    #materialBox { margin-top: 15px; padding: 15px; background-color: #252525; border: 1px solid #444; border-radius: 5px; display: none; }
+    .radio-line { display: block; margin-bottom: 10px; cursor: pointer; }
+    .radio-line input { width: auto; margin-right: 8px; }
+    .result { margin-top: 25px; padding: 15px; background-color: #0b2210; border: 1px solid #1a4d25; border-radius: 5px; text-align: center; }
+    .result span { display: block; color: #4ade80; font-size: 2em; font-weight: bold; }
+    .result small { color: #888; font-size: 0.8em; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Calcolatore Dose</h2>
+
+  <!-- Elenco Presse INSERITO MANUALMENTE (solo quelle presenti nell'Excel) -->
+  <label>Seleziona Pressa:</label>
+  <select id="pressa" onchange="cambiaPressa()">
+    <option value="">-- Seleziona una Pressa --</option>
+    <option value="6">Pressa 6</option>
+    <option value="10">Pressa 10</option>
+    <option value="11">Pressa 11</option>
+    <option value="12">Pressa 12</option>
+    <option value="13">Pressa 13</option>
+    <option value="14">Pressa 14</option>
+    <option value="16">Pressa 16</option>
+    <option value="17">Pressa 17</option>
+    <option value="18">Pressa 18</option>
+    <option value="19">Pressa 19</option>
+    <option value="21">Pressa 21</option>
+    <option value="22">Pressa 22</option>
+    <option value="23">Pressa 23</option>
+    <option value="25">Pressa 25</option>
+    <option value="26">Pressa 26</option>
+    <option value="27">Pressa 27</option>
+    <option value="28">Pressa 28</option>
+    <option value="31">Pressa 31</option>
+    <option value="32">Pressa 32</option>
+    <option value="33">Pressa 33</option>
+    <option value="34">Pressa 34</option>
+    <option value="36">Pressa 36</option>
+    <option value="37">Pressa 37</option>
+    <option value="38">Pressa 38</option>
+    <option value="43">Pressa 43</option>
+    <option value="44">Pressa 44</option>
+    <option value="46">Pressa 46</option>
+    <option value="47">Pressa 47</option>
+    <option value="48">Pressa 48</option>
+    <option value="49">Pressa 49</option>
+    <option value="52">Pressa 52</option>
+    <option value="56">Pressa 56</option>
+    <option value="60">Pressa 60</option>
+    <option value="61">Pressa 61</option>
+    <option value="63">Pressa 63</option>
+    <option value="64">Pressa 64</option>
+    <option value="66">Pressa 66</option>
+    <option value="68">Pressa 68</option>
+    <option value="69">Pressa 69</option>
+    <option value="70">Pressa 70</option>
+    <option value="72">Pressa 72</option>
+    <option value="73">Pressa 73</option>
+    <option value="74">Pressa 74</option>
+    <option value="75">Pressa 75</option>
+    <option value="76">Pressa 76</option>
+    <option value="91">Pressa 91</option>
+    <option value="92">Pressa 92</option>
+    <option value="93">Pressa 93</option>
+    <option value="94">Pressa 94</option>
+    <option value="95">Pressa 95</option>
+    <option value="96">Pressa 96</option>
+    <option value="97">Pressa 97</option>
+    <option value="98">Pressa 98</option>
+  </select>
+
+  <!-- Box per i materiali (mostrato solo se ci sono scelte multiple) -->
+  <div id="materialBox">
+    <label>Scegli il Materiale:</label>
+    <div id="materialRadios"></div>
+  </div>
+
+  <label>Coefficiente (Inserito in automatico):</label>
+  <input type="number" id="coeff" step="0.0001" placeholder="0.00" oninput="calcola()">
+
+  <label>Peso del Pezzo (g):</label>
+  <input type="number" id="peso" step="0.01" placeholder="Es. 150" oninput="calcola()">
+
+  <label>Numero di Impronte:</label>
+  <select id="impronte" onchange="calcola()">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+  </select>
+
+  <div class="result">
+    <small>DOSE TOTALE</small>
+    <span id="risultato">0.00</span>
+  </div>
+</div>
+
+<script>
+  var database = {
+    "6": [ { mat: "PVC", val: 0.25 } ],
+    "10": [ { mat: "PVC", val: 0.22 } ],
+    "11": [ { mat: "PVC", val: 0.195 } ],
+    "12": [ { mat: "PVC", val: 0.11 } ],
+    "13": [ { mat: "PVC", val: 0.11 }, { mat: "PVC ASTORE", val: 0.125 } ],
+    "14": [ { mat: "PVC", val: 0.25 } ],
+    "16": [ { mat: "PVC", val: 0.42 } ],
+    "17": [ { mat: "PVC", val: 0.42 } ],
+    "18": [ { mat: "PVC", val: 0.09 } ],
+    "19": [ { mat: "PVC", val: 0.3 } ],
+    "21": [ { mat: "PP", val: 0.495 } ],
+    "22": [ { mat: "PVC", val: 0.175 } ],
+    "23": [ { mat: "PVC", val: 0.2 } ],
+    "25": [ { mat: "PVC", val: 0.05 } ],
+    "26": [ { mat: "PVC", val: 0.22 } ],
+    "27": [ { mat: "PVC", val: 0.05 } ],
+    "28": [ { mat: "PVC", val: 0.11 } ],
+    "31": [ { mat: "PVC", val: 0.13 } ],
+    "32": [ { mat: "PVC", val: 0.13 } ],
+    "33": [ { mat: "PVC", val: 0.087 } ],
+    "34": [ { mat: "PVC", val: 0.175 } ],
+    "36": [ { mat: "PVC", val: 0.14 }, { mat: "PVC ASTORE", val: 0.14 } ],
+    "37": [ { mat: "PVC", val: 0.175 } ],
+    "38": [ { mat: "PVC", val: 0.135 } ],
+    "43": [ { mat: "PVC", val: 0.23 }, { mat: "PP", val: 0.43 } ],
+    "44": [ { mat: "PVC", val: 0.105 } ],
+    "46": [ { mat: "PVC", val: 0.09 } ],
+    "47": [ { mat: "PVC", val: 0.07 } ],
+    "48": [ { mat: "PVC", val: 0.11 } ],
+    "49": [ { mat: "PVC", val: 0.23 } ],
+    "52": [ { mat: "PVC", val: 0.7 } ],
+    "56": [ { mat: "PVC ASTORE", val: 0.32 } ],
+    "60": [ { mat: "PVC", val: 0.23 } ],
+    "61": [ { mat: "PVC", val: 0.17 } ],
+    "63": [ { mat: "PVC", val: 0.1 } ],
+    "64": [ { mat: "PVC", val: 0.377 } ],
+    "66": [ { mat: "PVC", val: 0.35 } ],
+    "68": [ { mat: "PVC", val: 0.0975 } ],
+    "69": [ { mat: "PVC", val: 0.31 } ],
+    "70": [ { mat: "PVC", val: 0.1036 } ],
+    "72": [ { mat: "PVC", val: 0.125 }, { mat: "PVC ASTORE", val: 0.17 } ],
+    "73": [ { mat: "PVC", val: 0.074 } ],
+    "74": [ { mat: "PVC", val: 0.06 } ],
+    "75": [ { mat: "PVC", val: 0.15 }, { mat: "PVC ASTORE", val: 0.053 } ],
+    "76": [ { mat: "PVC", val: 0.075 } ],
+    "91": [ { mat: "PVC ASTORE", val: 0.2 }, { mat: "PP", val: 0.34 } ],
+    "92": [ { mat: "PP", val: 1.02 } ],
+    "93": [ { mat: "PP", val: 0.4 } ],
+    "94": [ { mat: "PP", val: 0.04 } ],
+    "95": [ { mat: "PP", val: 0.21 }, { mat: "PC", val: 0.17 } ],
+    "96": [ { mat: "PVC", val: 0.06 }, { mat: "PP", val: 0.059 } ],
+    "97": [ { mat: "PVC", val: 0.156 } ],
+    "98": [ { mat: "PP", val: 0.22 } ]
+  };
+
+  function cambiaPressa() {
+    var p = document.getElementById("pressa").value;
+    var box = document.getElementById("materialBox");
+    var radios = document.getElementById("materialRadios");
+    var inputCoeff = document.getElementById("coeff");
+    
+    radios.innerHTML = "";
+    box.style.display = "none";
+    inputCoeff.value = "";
+    
+    if(p === "" || database[p] === undefined) {
+      calcola();
+      return;
+    }
+    
+    var info = database[p];
+    
+    if(info.length === 1) {
+      inputCoeff.value = info[0].val;
+    } else {
+      box.style.display = "block";
+      for(var i = 0; i < info.length; i++) {
+        var rad = '<label class="radio-line">' +
+                  '<input type="radio" name="scelta" value="'+info[i].val+'" onclick="imposta('+info[i].val+')" ' + (i===0?'checked':'') + '>' +
+                  info[i].mat + ' (' + info[i].val + ')' +
+                  '</label>';
+        radios.innerHTML += rad;
+      }
+      inputCoeff.value = info[0].val;
+    }
+    calcola();
+  }
+
+  function imposta(valore) {
+    document.getElementById("coeff").value = valore;
+    calcola();
+  }
+
+  function calcola() {
+    var p = parseFloat(document.getElementById("peso").value);
+    var c = parseFloat(document.getElementById("coeff").value);
+    var i = parseInt(document.getElementById("impronte").value) || 1;
+    var r = document.getElementById("risultato");
+    
+    if(isNaN(p) || isNaN(c)) {
+      r.innerText = "0.00";
+    } else {
+      var dose = p * c * i;
+      r.innerText = dose.toFixed(2);
+    }
+  }
+</script>
+</body>
+</html>
